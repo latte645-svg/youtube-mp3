@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube 오디오 추출기</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result.active {
+            display: block;
+        }
+
+        .download-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 15px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .video-info {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .video-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .video-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .example {
+            background: #e7f3ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #0066cc;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 YouTube 오디오 추출기</h1>
+        <p class="subtitle">유튜브 동영상에서 MP3 오디오를 추출하세요</p>
+
+        <div class="warning">
+            ⚠️ <strong>주의:</strong> 저작권이 있는 콘텐츠는 개인적 용도로만 사용하세요. 상업적 사용이나 재배포는 법적 문제가 발생할 수 있습니다.
+        </div>
+
+        <div class="input-group">
+            <label for="youtubeUrl">YouTube URL</label>
+            <input 
+                type="text" 
+                id="youtubeUrl" 
+                placeholder="https://www.youtube.com/watch?v=..."
+            >
+            <div class="example">
+                예시: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="extractAudio()">
+                🎵 오디오 추출
+            </button>
+            <button class="btn-secondary" onclick="clearForm()">
+                🔄 초기화
+            </button>
+        </div>
+
+        <div class="result" id="result">
+            <div class="video-info" id="videoInfo"></div>
+            <a href="#" class="download-btn" id="downloadBtn" download>
+                ⬇️ MP3 다운로드
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // YouTube URL에서 비디오 ID 추출
+        function getVideoId(url) {
+            const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+            const match = url.match(regex);
+            return match ? match[1] : null;
+        }
+
+        // 폼 초기화
+        function clearForm() {
+            document.getElementById('youtubeUrl').value = '';
+            document.getElementById('result').classList.remove('active');
+            const downloadOptions = document.querySelector('.download-options');
+            if (downloadOptions) {
+                downloadOptions.remove();
+            }
+            document.getElementById('downloadBtn').style.display = 'block';
+        }
+
+        // 오디오 추출 (여러 다운로드 옵션 제공)
+        function extractAudio() {
+            const urlInput = document.getElementById('youtubeUrl');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                alert('YouTube URL을 입력해주세요.');
+                return;
+            }
+
+            const videoId = getVideoId(url);
+            if (!videoId) {
+                alert('올바른 YouTube URL이 아닙니다.');
+                return;
+            }
+
+            // 다운로드 옵션 표시
+            showDownloadOptions(videoId, url);
+        }
+
+        // 다운로드 옵션 표시
+        function showDownloadOptions(videoId, fullUrl) {
+            const downloadServices = [
+                {
+                    name: 'YT5s (추천)',
+                    url: `https://yt5s.io/ko/youtube-to-mp3`,
+                    description: '빠르고 안정적인 MP3 변환'
+                },
+                {
+                    name: 'Y2meta',
+                    url: `https://y2meta.app/ko/youtube-mp3`,
+                    description: '고품질 MP3 다운로드'
+                },
+                {
+                    name: ' YTMP3',
+                    url: `https://ytmp3.nu/`,
+                    description: '간편한 변환 서비스'
+                },
+                {
+                    name: 'SaveFrom',
+                    url: `https://savefrom.net/`,
+                    description: '다목적 다운로더'
+                },
+                {
+                    name: 'SSYOUTUBE 트릭',
+                    url: fullUrl.replace('youtube.com', 'ssyoutube.com'),
+                    description: 'URL에 ss 추가하는 방법'
+                }
+            ];
+
+            // 비디오 정보 표시
+            document.getElementById('videoInfo').innerHTML = `
+                <h3>다운로드 방법을 선택하세요</h3>
+                <p style="font-size: 13px; color: #888; margin-top: 5px;">
+                    YouTube URL: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${fullUrl}</code>
+                </p>
+                <div style="background: #e7f3ff; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 13px;">
+                    💡 <strong>팁:</strong> 서비스를 클릭하면 새 창이 열립니다. 거기에 위 YouTube URL을 붙여넣으세요!
+                </div>
+            `;
+
+            // URL 복사 버튼 추가
+            const copyButton = document.createElement('button');
+            copyButton.textContent = '📋 YouTube URL 복사';
+            copyButton.style.cssText = `
+                width: 100%;
+                padding: 10px;
+                margin-top: 10px;
+                background: #28a745;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+            `;
+            copyButton.onclick = function() {
+                navigator.clipboard.writeText(fullUrl).then(() => {
+                    copyButton.textContent = '✅ 복사됨!';
+                    setTimeout(() => {
+                        copyButton.textContent = '📋 YouTube URL 복사';
+                    }, 2000);
+                });
+            };
+            document.getElementById('videoInfo').appendChild(copyButton);
+
+            // 기존 다운로드 옵션이 있으면 제거
+            const existingOptions = document.querySelector('.download-options');
+            if (existingOptions) {
+                existingOptions.remove();
+            }
+
+            // 다운로드 옵션 버튼들 생성
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'download-options';
+            optionsContainer.style.marginTop = '15px';
+            
+            downloadServices.forEach((service, index) => {
+                const button = document.createElement('a');
+                button.href = service.url;
+                button.target = '_blank';
+                button.className = 'download-option-btn';
+                button.style.cssText = `
+                    display: block;
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    background: ${index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa'};
+                    color: ${index === 0 ? 'white' : '#333'};
+                    text-decoration: none;
+                    border-radius: 10px;
+                    transition: all 0.3s;
+                    border: ${index === 0 ? 'none' : '2px solid #e0e0e0'};
+                `;
+                
+                button.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${service.name}</strong>
+                            <div style="font-size: 12px; margin-top: 3px; opacity: 0.8;">
+                                ${service.description}
+                            </div>
+                        </div>
+                        <span style="font-size: 20px;">→</span>
+                    </div>
+                `;
+                
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(5px)';
+                    if (index !== 0) {
+                        this.style.borderColor = '#667eea';
+                    }
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                    if (index !== 0) {
+                        this.style.borderColor = '#e0e0e0';
+                    }
+                });
+                
+                optionsContainer.appendChild(button);
+            });
+
+            const resultDiv = document.getElementById('result');
+            const videoInfo = document.getElementById('videoInfo');
+            videoInfo.appendChild(optionsContainer);
+            
+            // 기존 다운로드 버튼 숨기기
+            document.getElementById('downloadBtn').style.display = 'none';
+            
+            resultDiv.classList.add('active');
+        }
+
+        // Enter 키로 검색
+        document.getElementById('youtubeUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                extractAudio();
+            }
+        });
+    </script>
+</body>
+</html>
